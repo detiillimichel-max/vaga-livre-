@@ -1,0 +1,392 @@
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>vaga-livre Parking Jam - Corrigido</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&amp;display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Outfit', system-ui, -apple-system, sans-serif; }
+  body { overscroll-behavior: none; }
+  .board-grid {
+    background-image: 
+      linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: calc(100%/6) calc(100%/6);
+  }
+  .car {
+    position: absolute;
+    border-radius: 14px;
+    box-shadow: 0 8px 16px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.12), inset 0 -4px 6px rgba(0,0,0,.28);
+    transition: left .18s cubic-bezier(.2,.8,.2,1), top .18s cubic-bezier(.2,.8,.2,1), transform .12s;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .car:active { transform: scale(.96); z-index: 50; }
+  .car.horizontal { border-radius: 16px; }
+  .car.vertical { border-radius: 16px; }
+  .car.red { 
+    background: linear-gradient(180deg,#ef4444 0%,#b91c1c 100%); 
+    border: 2.5px solid #7f1d1d;
+  }
+  .car.blue { 
+    background: linear-gradient(180deg,#60a5fa 0%,#1e40af 100%); 
+    border: 2.5px solid #1e3a8a;
+  }
+  .car.white { 
+    background: linear-gradient(180deg,#f8fafc 0%,#cbd5e1 100%); 
+    border: 2.5px solid #64748b;
+  }
+  .car::before {
+    content:''; position: absolute;
+    background: rgba(0,0,0,.22);
+    border-radius: 6px;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,.15), inset 0 -1px 1px rgba(0,0,0,.3);
+  }
+  .car.horizontal::before { width: 32%; height: 54%; left: 34%; top: 23%; }
+  .car.vertical::before { width: 54%; height: 32%; left: 23%; top: 34%; }
+  .car.red::after {
+    content:'➤'; position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    color: white; font-weight: 900; font-size: 20px; text-shadow: 0 2px 3px rgba(0,0,0,.6);
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.8));
+  }
+  .car.vertical.red::after { right: 50%; transform: translate(50%,-50%) rotate(90deg); }
+  .car.white::before { background: rgba(30,41,59,.25); }
+  .parking-spot {
+    position: absolute;
+    border: 2px dashed rgba(148,163,184,.15);
+    border-radius: 10px;
+    pointer-events: none;
+  }
+</style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.-left-1{left:-0.25rem}.-right-3{right:-0.75rem}.-right-6{right:-1.5rem}.bottom-0{bottom:0px}.top-0{top:0px}.top-1\/2{top:50%}.z-20{z-index:20}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-4{margin-bottom:1rem}.mr-1{margin-right:0.25rem}.mt-1{margin-top:0.25rem}.mt-1\.5{margin-top:0.375rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.flex{display:flex}.hidden{display:none}.aspect-square{aspect-ratio:1 / 1}.h-0{height:0px}.h-10{height:2.5rem}.h-11{height:2.75rem}.h-12{height:3rem}.h-16{height:4rem}.h-\[70\%\]{height:70%}.h-9{height:2.25rem}.min-h-screen{min-height:100vh}.w-0{width:0px}.w-16{width:4rem}.w-6{width:1.5rem}.w-8{width:2rem}.w-full{width:100%}.max-w-\[320px\]{max-width:320px}.max-w-\[420px\]{max-width:420px}.flex-1{flex:1 1 0%}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.touch-none{touch-action:none}.select-none{-webkit-user-select:none;user-select:none}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-around{justify-content:space-around}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.self-center{align-self:center}.overflow-hidden{overflow:hidden}.rounded-2xl{border-radius:1rem}.rounded-\[22px\]{border-radius:22px}.rounded-\[28px\]{border-radius:28px}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-\[5px\]{border-width:5px}.border-b-\[18px\]{border-bottom-width:18px}.border-l-\[26px\]{border-left-width:26px}.border-t-\[18px\]{border-top-width:18px}.border-emerald-500\/30{border-color:rgb(16 185 129 / 0.3)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.border-b-transparent{border-bottom-color:transparent}.border-l-emerald-400{--tw-border-opacity:1;border-left-color:rgb(52 211 153 / var(--tw-border-opacity, 1))}.border-t-transparent{border-top-color:transparent}.bg-\[\#050a14\]{--tw-bg-opacity:1;background-color:rgb(5 10 20 / var(--tw-bg-opacity, 1))}.bg-\[\#0a1424\]{--tw-bg-opacity:1;background-color:rgb(10 20 36 / var(--tw-bg-opacity, 1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-emerald-500\/15{background-color:rgb(16 185 129 / 0.15)}.bg-emerald-500\/20{background-color:rgb(16 185 129 / 0.2)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-800\/60{background-color:rgb(30 41 59 / 0.6)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/70{background-color:rgb(15 23 42 / 0.7)}.bg-slate-950\/90{background-color:rgb(2 6 23 / 0.9)}.p-3{padding:0.75rem}.p-6{padding:1.5rem}.p-7{padding:1.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.pb-24{padding-bottom:6rem}.pb-3{padding-bottom:0.75rem}.pr-1{padding-right:0.25rem}.pt-6{padding-top:1.5rem}.text-center{text-align:center}.text-right{text-align:right}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[11px\]{font-size:11px}.text-\[12px\]{font-size:12px}.text-\[13px\]{font-size:13px}.text-\[28px\]{font-size:28px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-none{line-height:1}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.opacity-40{opacity:0.4}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_25px_60px_-15px_rgba\(0\2c 0\2c 0\2c \.8\)\]{--tw-shadow:0 25px 60px -15px rgba(0,0,0,.8);--tw-shadow-colored:0 25px 60px -15px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.blur-xl{--tw-blur:blur(24px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.drop-shadow-\[0_0_12px_rgba\(16\2c 185\2c 129\2c \.8\)\]{--tw-drop-shadow:drop-shadow(0 0 12px rgba(16,185,129,.8));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-xl{--tw-backdrop-blur:blur(24px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.hover\:bg-amber-400:hover{--tw-bg-opacity:1;background-color:rgb(251 191 36 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.active\:scale-\[\.98\]:active{--tw-scale-x:.98;--tw-scale-y:.98;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}</style></head>
+<body class="min-h-screen bg-[#050a14] text-white flex flex-col items-center">
+  <div class="w-full max-w-[420px] px-4 pb-24">
+    <!-- Header -->
+    <header class="pt-6 pb-3 text-center">
+      <h1 class="text-[28px] font-black tracking-tight leading-none">vaga-livre <span class="text-amber-400">Parking Jam</span></h1>
+      <p class="text-slate-400 text-[13px] mt-1.5">Correção do Michel • vermelho sempre bloqueado</p>
+    </header>
+
+    <!-- Controls -->
+    <div class="mt-4 bg-slate-900/70 backdrop-blur-xl rounded-[22px] p-3 border border-slate-800 shadow-xl">
+      <div class="flex items-center justify-between">
+        <div class="flex gap-2">
+          <button id="undo" class="h-11 px-4 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 border border-slate-700">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5A4.5 4.5 0 0 1 19 13.5V19"></path></svg>
+            Desfazer
+          </button>
+          <button id="reset" class="h-11 px-4 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-xl text-sm font-semibold transition border border-slate-700">
+            Reiniciar
+          </button>
+        </div>
+        <div class="text-right pr-1">
+          <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Movimentos</div>
+          <div id="moves" class="text-2xl font-black leading-none text-amber-400">3</div>
+        </div>
+      </div>
+      
+      <!-- Level selector -->
+      <div class="flex gap-1.5 mt-3">
+        <div class="text-[11px] text-slate-500 font-semibold mr-1 self-center">NÍVEL</div>
+        <div id="levels" class="flex gap-1.5 flex-1"><button class="lvl flex-1 h-9 rounded-xl text-sm font-bold transition border bg-amber-500 text-slate-900 border-amber-500">1</button><button class="lvl flex-1 h-9 rounded-xl text-sm font-bold transition border bg-slate-800 border-slate-700 text-slate-300">2</button><button class="lvl flex-1 h-9 rounded-xl text-sm font-bold transition border bg-slate-800 border-slate-700 text-slate-300">3</button><button class="lvl flex-1 h-9 rounded-xl text-sm font-bold transition border bg-slate-800 border-slate-700 text-slate-300">4</button><button class="lvl flex-1 h-9 rounded-xl text-sm font-bold transition border bg-slate-800 border-slate-700 text-slate-300">5</button></div>
+      </div>
+    </div>
+
+    <!-- Board -->
+    <div class="relative mt-5">
+      <div id="boardWrap" class="relative mx-auto" style="width:min(92vw,380px)">
+        <div id="board" class="aspect-square w-full bg-[#0a1424] rounded-[28px] border-[5px] border-slate-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,.8)] relative overflow-hidden touch-none select-none board-grid">
+          <!-- parking spots -->
+          <div class="parking-spot" style="left:calc(0% + 4px);top:calc(0% + 4px);width:calc(16.666% - 8px);height:calc(16.666% - 8px)"></div>
+          <div class="parking-spot" style="left:calc(16.666% + 4px);top:calc(0% + 4px);width:calc(16.666% - 8px);height:calc(16.666% - 8px)"></div>
+          <div class="parking-spot" style="left:calc(0% + 4px);top:calc(83.333% + 4px);width:calc(16.666% - 8px);height:calc(16.666% - 8px)"></div>
+        <div class="car red horizontal" data-id="red" style="width: 117.333px; height: 55.6667px; left: 400px; top: 126.333px; transition: left 0.45s cubic-bezier(0.2, 0.7, 0.3, 1);"></div><div class="car blue vertical" data-id="b1" style="width: 55.6667px; height: 117.333px; left: 188px; top: 249.667px;"></div><div class="car white vertical" data-id="w1" style="width: 55.6667px; height: 117.333px; left: 3px; top: 3px;"></div><div class="car blue vertical" data-id="b2" style="width: 55.6667px; height: 117.333px; left: 126.333px; top: 249.667px;"></div><div class="car white vertical" data-id="w2" style="width: 55.6667px; height: 117.333px; left: 249.667px; top: 3px;"></div></div>
+        
+        <!-- Exit -->
+        <div id="exit" class="absolute -right-3 z-20 pointer-events-none transition-all duration-300" style="width: 34px; height: 56px; top: 126.167px;">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-0 h-0 border-t-[18px] border-b-[18px] border-l-[26px] border-t-transparent border-b-transparent border-l-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,.8)] animate-pulse"></div>
+          </div>
+          <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-8 h-[70%] bg-emerald-500/20 blur-xl rounded-full"></div>
+        </div>
+        
+        <!-- Road markings -->
+        <div class="absolute -right-6 top-0 bottom-0 w-6 pointer-events-none opacity-40" style="background: repeating-linear-gradient(to bottom, #fbbf24 0 18px, transparent 18px 36px);"></div>
+      </div>
+      
+      <p class="text-center text-[12px] text-slate-500 mt-3 px-6">Arraste os carros. Libere o vermelho até a saída →</p>
+    </div>
+  </div>
+
+  <!-- Win Modal -->
+  <div id="win" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl items-center justify-center z-50 p-6 flex">
+    <div class="bg-slate-900 border-slate-800 rounded-[28px] p-7 w-full max-w-[320px] text-center shadow-2xl">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/15 flex items-center justify-center mb-4 border border-emerald-500/30">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+      </div>
+      <h2 class="text-2xl font-black">Vaga Liberada!</h2>
+      <p class="text-slate-400 text-sm mt-1">Michel aprovado ✓ vermelho estava bloqueado</p>
+      <div class="mt-4 bg-slate-800/60 rounded-2xl p-3 flex justify-around">
+        <div><div class="text-[11px] text-slate-500">NÍVEL</div><div id="winLevel" class="font-bold text-lg">1</div></div>
+        <div><div class="text-[11px] text-slate-500">MOVIMENTOS</div><div id="winMoves" class="font-bold text-lg text-amber-400">3</div></div>
+      </div>
+      <button id="nextBtn" class="mt-5 w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl active:scale-[.98] transition">Próximo Nível</button>
+      <button id="replayBtn" class="mt-2 w-full h-10 text-slate-400 text-sm">Jogar novamente</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const GRID = 6;
+  const levels = [
+    // NÍVEL 1: vermelho (1,2) bloqueado por azul vertical (3,2-3)
+    {
+      exitRow: 2,
+      cars: [
+        {id:'red', x:1, y:2, w:2, h:1, color:'red'},
+        {id:'b1', x:3, y:2, w:1, h:2, color:'blue'},
+        {id:'w1', x:0, y:0, w:1, h:2, color:'white'},
+        {id:'b2', x:2, y:4, w:1, h:2, color:'blue'},
+        {id:'w2', x:4, y:0, w:1, h:2, color:'white'},
+      ]
+    },
+    // NÍVEL 2: vermelho (1,2) bloqueado por azul (4,1-2) e branco (3,3-4)
+    {
+      exitRow: 2,
+      cars: [
+        {id:'red', x:1, y:2, w:2, h:1, color:'red'},
+        {id:'b1', x:4, y:1, w:1, h:2, color:'blue'},
+        {id:'w1', x:3, y:3, w:2, h:1, color:'white'},
+        {id:'b2', x:0, y:0, w:2, h:1, color:'blue'},
+        {id:'w2', x:2, y:0, w:1, h:2, color:'white'},
+        {id:'b3', x:5, y:4, w:1, h:2, color:'blue'},
+      ]
+    },
+    // NÍVEL 3: vermelho (0,2) bloqueado por 2 verticais
+    {
+      exitRow: 2,
+      cars: [
+        {id:'red', x:0, y:2, w:2, h:1, color:'red'},
+        {id:'b1', x:2, y:2, w:1, h:2, color:'blue'},
+        {id:'w1', x:4, y:1, w:1, h:2, color:'white'},
+        {id:'b2', x:3, y:4, w:2, h:1, color:'blue'},
+        {id:'w2', x:5, y:3, w:1, h:3, color:'white'},
+        {id:'b3', x:0, y:4, w:2, h:1, color:'blue'},
+      ]
+    },
+    // NÍVEL 4: vermelho (1,2) bloqueado por branco (3,0-1) e azul (5,2-3)
+    {
+      exitRow: 2,
+      cars: [
+        {id:'red', x:1, y:2, w:2, h:1, color:'red'},
+        {id:'w1', x:3, y:0, w:1, h:2, color:'white'},
+        {id:'b1', x:5, y:2, w:1, h:2, color:'blue'},
+        {id:'b2', x:3, y:3, w:2, h:1, color:'blue'},
+        {id:'w2', x:0, y:4, w:2, h:1, color:'white'},
+        {id:'b3', x:2, y:5, w:1, h:1, color:'blue'},
+      ]
+    },
+    // NÍVEL 5 (Michel): vermelho (3,1) com azul em (4,3-4), branco esquerda, BLOQUEADO por 2 carros
+    {
+      exitRow: 1,
+      cars: [
+        {id:'red', x:3, y:1, w:2, h:1, color:'red'},
+        {id:'b1', x:4, y:3, w:1, h:2, color:'blue'}, // azul direita x4 y3-4
+        {id:'wLeft', x:0, y:1, w:2, h:1, color:'white'}, // branco esquerda
+        {id:'bBlock', x:5, y:0, w:1, h:2, color:'blue'}, // bloqueia saída
+        {id:'wBlock', x:4, y:2, w:2, h:1, color:'white'}, // segundo bloqueio
+        {id:'b2', x:1, y:3, w:1, h:2, color:'blue'},
+        {id:'w2', x:2, y:4, w:2, h:1, color:'white'},
+      ]
+    },
+  ];
+
+  const board = document.getElementById('board');
+  const exitEl = document.getElementById('exit');
+  const movesEl = document.getElementById('moves');
+  const undoBtn = document.getElementById('undo');
+  const resetBtn = document.getElementById('reset');
+  const levelsEl = document.getElementById('levels');
+  const winModal = document.getElementById('win');
+  const winLevel = document.getElementById('winLevel');
+  const winMoves = document.getElementById('winMoves');
+  const nextBtn = document.getElementById('nextBtn');
+  const replayBtn = document.getElementById('replayBtn');
+
+  let current = 0, moves = 0, history = [], state = null, cell = 0, dragging = null;
+
+  // Create level buttons
+  levels.forEach((_,i)=>{
+    const b = document.createElement('button');
+    b.className = 'lvl flex-1 h-9 rounded-xl text-sm font-bold transition border';
+    b.textContent = i+1;
+    b.onclick = ()=>loadLevel(i);
+    levelsEl.appendChild(b);
+  });
+
+  function updateLevelButtons(){
+    [...levelsEl.children].forEach((b,i)=>{
+      b.classList.toggle('bg-amber-500', i===current);
+      b.classList.toggle('text-slate-900', i===current);
+      b.classList.toggle('border-amber-500', i===current);
+      b.classList.toggle('bg-slate-800', i!==current);
+      b.classList.toggle('border-slate-700', i!==current);
+      b.classList.toggle('text-slate-300', i!==current);
+    });
+  }
+
+  function loadLevel(idx){
+    current = idx;
+    state = JSON.parse(JSON.stringify(levels[idx]));
+    moves = 0; history = [];
+    movesEl.textContent = '0';
+    updateLevelButtons();
+    render();
+    winModal.classList.add('hidden');
+    winModal.classList.remove('flex');
+  }
+
+  function render(){
+    board.querySelectorAll('.car').forEach(n=>n.remove());
+    state.cars.forEach(car=>{
+      const el = document.createElement('div');
+      el.className = `car ${car.color} ${car.w>car.h?'horizontal':'vertical'}`;
+      el.dataset.id = car.id;
+      board.appendChild(el);
+      el.addEventListener('pointerdown', startDrag);
+    });
+    updateSize();
+  }
+
+  function updateSize(){
+    cell = board.clientWidth / GRID;
+    state.cars.forEach(car=>{
+      const el = board.querySelector(`[data-id="${car.id}"]`);
+      if(!el) return;
+      el.style.width = (car.w*cell - 6) + 'px';
+      el.style.height = (car.h*cell - 6) + 'px';
+      el.style.left = (car.x*cell + 3) + 'px';
+      el.style.top = (car.y*cell + 3) + 'px';
+    });
+    exitEl.style.top = (state.exitRow*cell + cell/2 - 28) + 'px';
+  }
+
+  function getLimits(car){
+    if(car.w > car.h){ // horizontal
+      let min = 0, max = GRID - car.w;
+      state.cars.forEach(o=>{
+        if(o.id===car.id) return;
+        if(o.y < car.y + car.h && o.y + o.h > car.y){
+          if(o.x + o.w <= car.x) min = Math.max(min, o.x + o.w);
+          if(o.x >= car.x + car.w) max = Math.min(max, o.x - car.w);
+        }
+      });
+      return {min:min*cell, max:max*cell, axis:'x'};
+    } else {
+      let min = 0, max = GRID - car.h;
+      state.cars.forEach(o=>{
+        if(o.id===car.id) return;
+        if(o.x < car.x + car.w && o.x + o.w > car.x){
+          if(o.y + o.h <= car.y) min = Math.max(min, o.y + o.h);
+          if(o.y >= car.y + car.h) max = Math.min(max, o.y - car.h);
+        }
+      });
+      return {min:min*cell, max:max*cell, axis:'y'};
+    }
+  }
+
+  function startDrag(e){
+    const el = e.currentTarget;
+    const car = state.cars.find(c=>c.id===el.dataset.id);
+    dragging = {
+      el, car,
+      startX: e.clientX, startY: e.clientY,
+      startLeft: car.x*cell, startTop: car.y*cell,
+      limits: getLimits(car)
+    };
+    el.style.transition = 'none';
+    el.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp, {once:true});
+  }
+
+  function onMove(e){
+    if(!dragging) return;
+    const dx = e.clientX - dragging.startX;
+    const dy = e.clientY - dragging.startY;
+    if(dragging.limits.axis==='x'){
+      let nx = Math.max(dragging.limits.min, Math.min(dragging.limits.max, dragging.startLeft + dx));
+      dragging.el.style.left = (nx+3)+'px';
+    } else {
+      let ny = Math.max(dragging.limits.min, Math.min(dragging.limits.max, dragging.startTop + dy));
+      dragging.el.style.top = (ny+3)+'px';
+    }
+  }
+
+  function onUp(){
+    document.removeEventListener('pointermove', onMove);
+    if(!dragging) return;
+    const {el, car} = dragging;
+    el.style.transition = '';
+    const left = parseFloat(el.style.left) - 3;
+    const top = parseFloat(el.style.top) - 3;
+    const nx = Math.round(left / cell);
+    const ny = Math.round(top / cell);
+    const moved = nx!==car.x || ny!==car.y;
+    if(moved){
+      history.push(state.cars.map(c=>({id:c.id,x:c.x,y:c.y})));
+      car.x = nx; car.y = ny;
+      moves++; movesEl.textContent = moves;
+    }
+    el.style.left = (car.x*cell+3)+'px';
+    el.style.top = (car.y*cell+3)+'px';
+    dragging = null;
+    if(moved) checkWin();
+  }
+
+  function checkWin(){
+    const red = state.cars.find(c=>c.id==='red');
+    if(red.y===state.exitRow && red.x + red.w >= GRID){
+      const el = board.querySelector('[data-id="red"]');
+      el.style.transition = 'left .45s cubic-bezier(.2,.7,.3,1)';
+      el.style.left = (GRID*cell + 30) + 'px';
+      setTimeout(()=>{
+        winLevel.textContent = current+1;
+        winMoves.textContent = moves;
+        winModal.classList.remove('hidden');
+        winModal.classList.add('flex');
+      }, 350);
+    }
+  }
+
+  function undo(){
+    if(!history.length) return;
+    const prev = history.pop();
+    prev.forEach(p=>{
+      const c = state.cars.find(x=>x.id===p.id);
+      c.x = p.x; c.y = p.y;
+    });
+    moves = Math.max(0, moves-1);
+    movesEl.textContent = moves;
+    updateSize();
+  }
+
+  undoBtn.onclick = undo;
+  resetBtn.onclick = ()=>loadLevel(current);
+  nextBtn.onclick = ()=>loadLevel((current+1)%levels.length);
+  replayBtn.onclick = ()=>loadLevel(current);
+
+  window.addEventListener('resize', updateSize);
+  new ResizeObserver(updateSize).observe(board);
+
+  // start
+  loadLevel(0);
+})();
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+
+</body></html>
